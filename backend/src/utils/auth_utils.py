@@ -36,7 +36,7 @@ def create_access_token(data: dict) -> str:
     return encoded_jwt
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
+async def get_current(token: str = Depends(oauth2_scheme)) -> User:
     """Lấy thông tin user hiện tại từ token JWT."""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -46,14 +46,21 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     
-    user = await User.get_or_none(username=username).prefetch_related("employee")
+    user = await User.get_or_none(username=username)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     return user
 
 
-async def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
-    """Kiểm tra user hiện tại có phải admin không."""
+async def get_current_user(current_user: User = Depends(get_current)) -> User:
+    """Lấy thông tin user hiện tại từ token JWT."""
+    if current_user.role != "user":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+    return current_user
+
+
+async def get_current_admin(current_user: User = Depends(get_current)) -> User:
+    """Lấy thông tin admin hiện tại từ token JWT."""
     if current_user.role != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
     return current_user

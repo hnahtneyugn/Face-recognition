@@ -8,6 +8,13 @@ load_dotenv()
 
 DB_URL = os.getenv("DATABASE_URL")
 
+async def init_db():
+    await Tortoise.init(
+        db_url=DB_URL,
+        modules={"models": ["src.models", "aerich.models"]}
+    )
+    await Tortoise.generate_schemas()
+
 TORTOISE_ORM = {
     "connections": {"default": DB_URL},
     "apps": {
@@ -16,6 +23,8 @@ TORTOISE_ORM = {
             "default_connection": "default",
         },
     },
+    "use_tz": True,
+    "timezone": "UTC",
 }
 
 def init_orm(app: FastAPI):
