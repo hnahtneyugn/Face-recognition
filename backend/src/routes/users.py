@@ -40,8 +40,8 @@ async def record_attendance(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Face verification failed"
             )
-        checkin_date = datetime.now(timezone.utc).date()
-        checkin_time = datetime.now(timezone.utc)
+        checkin_date = datetime.now().date()
+        checkin_time = datetime.now().time()
         attendance_time = time(8, 0)
 
         attendance = await Attendance.get_or_none(user=current_user, date=checkin_date)
@@ -59,7 +59,7 @@ async def record_attendance(
             )
         
         attendance.time = checkin_time
-        attendance.status = "on_time" if checkin_time.time() <= attendance_time else "late"
+        attendance.status = "on_time" if checkin_time <= attendance_time else "late"
         await attendance.save()
 
         return {

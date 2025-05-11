@@ -20,7 +20,7 @@ class Attendance(Model):
     attendance_id = fields.IntField(pk=True, generated=True)
     user = fields.ForeignKeyField("models.User", related_name="attendances", on_delete=fields.CASCADE)
     date = fields.DateField()
-    time = fields.DatetimeField(null=True)
+    time = fields.TimeField(null=True)
     status = fields.CharField(max_length=20, default="pending")
 
     class Meta:

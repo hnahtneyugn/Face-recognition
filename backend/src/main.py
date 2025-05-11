@@ -17,7 +17,7 @@ app.include_router(users.router)
 scheduler = AsyncIOScheduler()
 
 
-scheduler.add_job(initialize_attendance, "cron", hour=0, minute=0)
+scheduler.add_job(initialize_attendance, "cron", hour=21, minute=54)
 
 
 @app.on_event("startup")

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from src.models import Attendance, User
 from datetime import datetime
 
@@ -6,7 +6,7 @@ from datetime import datetime
 async def initialize_attendance():
     """Tự động tạo bản ghi Attendance cho tất cả người dùng vào mỗi ngày mới."""
     try:
-        today = datetime.now(timezone.utc).date()
+        today = datetime.now().date()
 
         # if today.weekday() in (5, 6):
         #     print(f"Skipping attendance initialization on {today} (weekend)")
