@@ -7,7 +7,9 @@ async def validate_data(
         username: Optional[str] = None,
         password: Optional[str] = None,
         email: Optional[str] = None,
-        role: Optional[str] = None
+        role: Optional[str] = None,
+        fullname: Optional[str] = None,
+        department: Optional[str] = None
 ):
     if username:
         if await User.filter(username=username).exists():
@@ -41,4 +43,24 @@ async def validate_data(
             raise HTTPException(
                 status_code=400,
                 detail="Email already exists"
+            )
+        
+        if not email or not "@" in email or not "." in email:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid email format"
+            )
+
+    if fullname:
+        if len(fullname) < 2:
+            raise HTTPException(
+                status_code=400,
+                detail="Fullname must be at least 2 characters long"
+            )
+
+    if department:
+        if len(department) < 2:
+            raise HTTPException(
+                status_code=400,
+                detail="Department must be at least 2 characters long"
             )

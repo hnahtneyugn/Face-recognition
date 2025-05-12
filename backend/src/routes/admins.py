@@ -1,12 +1,29 @@
 from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File
 from src.utils.auth_utils import get_current_admin, get_password_hash
-from src.utils.file_utils import save_face_image, remove_face_image
+from src.utils.file_utils import save_face_image, remove_face_image, save_base64_image
 from src.utils.filter_utils import attendance_filters, user_filters, get_user_by_id
 from src.utils.validate_utils import validate_data
+import logging
+import base64
+from pydantic import BaseModel
 
 from src.models import User, Attendance
 from typing import List
 
+# Cấu hình logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class CreateUserRequest(BaseModel):
+    username: str
+    password: str
+    role: str
+    fullname: str
+    email: str
+    department: str
+    face_image: str  # base64 string
+    file_name: str
+    file_type: str
 
 router = APIRouter(prefix="/admins", tags=["admins"])
 
@@ -37,36 +54,39 @@ async def get_users(
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_user(
-    username: str,
-    password: str,
-    role: str,
-    fullname: str,
-    email: str,
-    department: str,
-    face_image: UploadFile = File(...),
-    # current_admin: User = Depends(get_current_admin)
-):
+async def create_user(request: CreateUserRequest):
     """Admin tạo user mới."""
-    await validate_data(
-        username=username,
-        password=password,
-        role=role,
-        email=email,
-    )
-
-    face_path = save_face_image(file=face_image, folder="faces")
-
     try:
+        logger.info(f"Received request to create user with data: username={request.username}, role={request.role}, email={request.email}")
+        
+        await validate_data(
+            username=request.username,
+            password=request.password,
+            role=request.role,
+            email=request.email,
+            fullname=request.fullname,
+            department=request.department
+        )
+        logger.info("Data validation passed")
+
+        # Lưu ảnh từ base64
+        face_path = save_base64_image(
+            base64_string=request.face_image,
+            file_name=request.file_name,
+            folder="faces"
+        )
+        logger.info(f"Face image saved at: {face_path}")
+
         user = await User.create(
-            username=username,
-            password_hash=get_password_hash(password),
-            role=role,
-            fullname=fullname,
-            email=email,
-            department=department,
+            username=request.username,
+            password_hash=get_password_hash(request.password),
+            role=request.role,
+            fullname=request.fullname,
+            email=request.email,
+            department=request.department,
             face_path=face_path
         )
+        logger.info(f"User created successfully with ID: {user.user_id}")
 
         return {
             "user_id": user.user_id,
@@ -78,7 +98,9 @@ async def create_user(
             "face_path": user.face_path
         }
     except Exception as e:
-        remove_face_image(path=face_path)
+        logger.error(f"Error creating user: {str(e)}", exc_info=True)
+        if 'face_path' in locals():
+            remove_face_image(path=face_path)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error creating user: {str(e)}"

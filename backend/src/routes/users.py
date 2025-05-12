@@ -103,3 +103,44 @@ async def get_attendance_history(
         }
         for att in filtered_attendances
     ]
+
+
+@router.post("/attendance/confirm")
+async def confirm_attendance(
+    data: dict,
+    current_user: User = Depends(get_current_user)
+):
+    """Xác nhận điểm danh cho user."""
+    try:
+        # Kiểm tra xem đã điểm danh hôm nay chưa
+        today = datetime.now().date()
+        existing_attendance = await Attendance.filter(
+            user=current_user,
+            date=today
+        ).first()
+
+        if existing_attendance:
+            if existing_attendance.status != "pending":
+                raise HTTPException(
+                    status_code=400,
+                    detail="Bạn đã điểm danh hôm nay"
+                )
+            # Cập nhật trạng thái điểm danh
+            existing_attendance.status = "on_time"
+            existing_attendance.time = datetime.now().time()
+            await existing_attendance.save()
+        else:
+            # Tạo bản ghi điểm danh mới
+            await Attendance.create(
+                user=current_user,
+                date=today,
+                time=datetime.now().time(),
+                status="on_time"
+            )
+
+        return {"message": "Điểm danh thành công"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )

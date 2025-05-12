@@ -3,11 +3,22 @@ from src.database import init_db, init_orm
 from src.routes import auth, admins, users
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from src.utils.attendance_utils import initialize_attendance
+from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI()
-init_orm(app)
 
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3001"],  # Frontend URL
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
+
+init_orm(app)
 
 app.include_router(auth.router)
 app.include_router(admins.router)
