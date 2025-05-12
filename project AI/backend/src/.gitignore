@@ -1,0 +1,13 @@
+# Python bytecode files (các file biên dịch của Python)
+pyproject.toml
+
+# Các thư mục tạm thời như pycache, migrations tạm thời
+src/__pycache__/
+src/routes/__pycache__/
+src/utils/__pycache__/
+
+# File môi trường (secret key, DB URL, .env)
+src/.env
+
+# File Migration tạm của Aerich
+migrations/
