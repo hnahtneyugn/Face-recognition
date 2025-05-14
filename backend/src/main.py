@@ -1,9 +1,11 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from src.database import init_db, init_orm
 from src.routes import auth, admins, users
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from src.utils.attendance_utils import initialize_attendance
-
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Request
 
 app = FastAPI()
 init_orm(app)
@@ -12,7 +14,7 @@ init_orm(app)
 app.include_router(auth.router)
 app.include_router(admins.router)
 app.include_router(users.router)
-
+app.mount("/faces", StaticFiles(directory="faces"), name="faces")
 
 scheduler = AsyncIOScheduler()
 
@@ -31,3 +33,14 @@ async def startup_event():
 async def shutdown_event():
     scheduler.shutdown()
     print("Scheduler shutdown")
+
+
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3001"],  # URL của frontend
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)

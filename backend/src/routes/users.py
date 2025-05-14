@@ -1,10 +1,10 @@
-from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File
+from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File, Request
 from src.utils.auth_utils import get_current_user
 from src.utils.file_utils import save_face_image, remove_face_image
 from src.utils.filter_utils import attendance_filters
 
 from src.models import User, Attendance
-from datetime import datetime, time, timezone
+from datetime import datetime, time
 from deepface import DeepFace
 from typing import List
 
@@ -13,14 +13,17 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.get("/", response_model=dict)
-async def get_my_info(current_user: User = Depends(get_current_user)):
+async def get_my_info(
+    request: Request,
+    current_user: User = Depends(get_current_user)
+):
     """User xem thông tin của cá nhân."""
     return {
         "user_id": current_user.user_id,
         "fullname": current_user.fullname,
         "email": current_user.email,
         "department": current_user.department,
-        "face_path": current_user.face_path
+        "face_path": str(request.base_url) + current_user.face_path
     }
 
 

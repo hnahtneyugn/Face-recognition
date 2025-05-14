@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File
+from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File, Request
 from src.utils.auth_utils import get_current_admin, get_password_hash
 from src.utils.file_utils import save_face_image, remove_face_image
 from src.utils.filter_utils import attendance_filters, user_filters, get_user_by_id
@@ -44,6 +44,7 @@ async def create_user(
     fullname: str,
     email: str,
     department: str,
+    request: Request,
     face_image: UploadFile = File(...),
     # current_admin: User = Depends(get_current_admin)
 ):
@@ -75,7 +76,7 @@ async def create_user(
             "fullname": user.fullname,
             "email": user.email,
             "department": user.department,
-            "face_path": user.face_path
+            "face_path": str(request.base_url) + user.face_path
         }
     except Exception as e:
         remove_face_image(path=face_path)
