@@ -7,6 +7,8 @@ from src.models import User, Attendance
 from datetime import datetime, time
 from deepface import DeepFace
 from typing import List
+import os
+from PIL import Image
 
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -23,7 +25,7 @@ async def get_my_info(
         "fullname": current_user.fullname,
         "email": current_user.email,
         "department": current_user.department,
-        "face_path": str(request.base_url) + current_user.face_path
+        "face_path": f"/{current_user.face_path}"
     }
 
 
@@ -36,13 +38,69 @@ async def record_attendance(
     temp_path = save_face_image(file=face_image, folder="temp")
 
     try:   
-        result = DeepFace.verify(img1_path=temp_path, img2_path=current_user.face_path)
-
-        if not result["verified"]:
+        # Đảm bảo sử dụng đường dẫn tuyệt đối cho DeepFace
+        absolute_temp_path = os.path.abspath(temp_path)
+        
+        # Xử lý đường dẫn ảnh tham chiếu
+        user_face_path = current_user.face_path.lstrip('/')  # Loại bỏ dấu / đầu nếu có
+        absolute_face_path = os.path.abspath(user_face_path)
+        
+        # Kiểm tra sự tồn tại của cả hai tệp
+        if not os.path.exists(absolute_temp_path):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Face verification failed"
+                detail=f"Temporary face image not found at {absolute_temp_path}"
             )
+            
+        if not os.path.exists(absolute_face_path):
+            alternative_path = os.path.join(os.getcwd(), user_face_path)
+            if os.path.exists(alternative_path):
+                absolute_face_path = alternative_path
+            else:
+                print(f"Failed to find face image at: {absolute_face_path}")
+                print(f"Alternative path tried: {alternative_path}")
+                print(f"Current directory: {os.getcwd()}")
+                print(f"User face_path from DB: {current_user.face_path}")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="User's reference face image not found. Please update your profile photo."
+                )
+            
+        print(f"Verifying faces: temp={absolute_temp_path}, user={absolute_face_path}")
+        
+        # Kiểm tra xem ảnh có thể đọc được không
+        try:
+            Image.open(absolute_temp_path).verify()
+            Image.open(absolute_face_path).verify()
+        except Exception as img_error:
+            print(f"Error verifying image files: {str(img_error)}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot read one or both of the face images. Please try again or update your profile photo."
+            )
+        
+        # Thực hiện xác minh khuôn mặt
+        try:
+            result = DeepFace.verify(img1_path=absolute_temp_path, img2_path=absolute_face_path)
+            if not result["verified"]:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Face verification failed"
+                )
+        except ValueError as ve:
+            error_message = str(ve)
+            if "img1_path" in error_message:
+                detail = "No face detected in the provided image. Please take another photo with your face clearly visible."
+            elif "img2_path" in error_message:
+                detail = "No face detected in your profile photo. Please update your profile with a clear face image."
+            else:
+                detail = error_message
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=detail
+            )
+        
+        # Ghi nhận điểm danh
         checkin_date = datetime.now().date()
         checkin_time = datetime.now().time()
         attendance_time = time(8, 0)
@@ -74,10 +132,14 @@ async def record_attendance(
             "status": attendance.status,
         }
     
+    except HTTPException as he:
+        raise he
     except Exception as e:
+        error_message = str(e)
+        print(f"Error during attendance processing: {error_message}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error processing attendance: {str(e)}"
+            detail=f"Error processing attendance: {error_message}"
         )
     finally:
         remove_face_image(temp_path)

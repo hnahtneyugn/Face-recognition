@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File, Request
+from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File, Request, Form
 from src.utils.auth_utils import get_current_admin, get_password_hash
 from src.utils.file_utils import save_face_image, remove_face_image
 from src.utils.filter_utils import attendance_filters, user_filters, get_user_by_id
@@ -30,7 +30,8 @@ async def get_users(
             "fullname": user.fullname,
             "email": user.email,
             "department": user.department,
-            "role": user.role
+            "role": user.role,
+            "face_path": f"/{user.face_path}" if user.face_path else None
         }
         for user in users
     ]
@@ -38,67 +39,89 @@ async def get_users(
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_user(
-    username: str,
-    password: str,
-    role: str,
-    fullname: str,
-    email: str,
-    department: str,
-    request: Request,
+    username: str = Form(...),
+    password: str = Form(...),
+    role: str = Form(...),
+    fullname: str = Form(...),
+    email: str = Form(...),
+    department: str = Form(...),
     face_image: UploadFile = File(...),
     # current_admin: User = Depends(get_current_admin)
 ):
     """Admin tạo user mới."""
-    await validate_data(
-        username=username,
-        password=password,
-        role=role,
-        email=email,
-    )
-
-    face_path = save_face_image(file=face_image, folder="faces")
-
+    print(f"Creating user: {username}, {fullname}, {email}, {department}, {role}")
+    print(f"Received face image: {face_image.filename}, {face_image.content_type}, size: {face_image.size}")
+    
     try:
-        user = await User.create(
+        await validate_data(
             username=username,
-            password_hash=get_password_hash(password),
+            password=password,
             role=role,
-            fullname=fullname,
             email=email,
-            department=department,
-            face_path=face_path
         )
+        
+        face_path = save_face_image(file=face_image, folder="faces")
+        print(f"Saved face image to: {face_path}")
 
-        return {
-            "user_id": user.user_id,
-            "username": user.username,
-            "role": user.role,
-            "fullname": user.fullname,
-            "email": user.email,
-            "department": user.department,
-            "face_path": str(request.base_url) + user.face_path
-        }
+        try:
+            user = await User.create(
+                username=username,
+                password_hash=get_password_hash(password),
+                role=role,
+                fullname=fullname,
+                email=email,
+                department=department,
+                face_path=face_path
+            )
+
+            # Tạo URL đầy đủ cho frontend
+            face_url = f"/{face_path}"  # Trả về đường dẫn tương đối để frontend dễ truy cập
+            print(f"User created: {user.user_id}, face_path: {face_url}")
+
+            response_data = {
+                "user_id": user.user_id,
+                "username": user.username,
+                "role": user.role,
+                "fullname": user.fullname,
+                "email": user.email,
+                "department": user.department,
+                "face_path": face_url
+            }
+            print(f"Returning response: {response_data}")
+            return response_data
+            
+        except Exception as e:
+            print(f"Error creating user in database: {str(e)}")
+            remove_face_image(path=face_path)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error creating user: {str(e)}"
+            )
     except Exception as e:
-        remove_face_image(path=face_path)
+        print(f"Error in create_user endpoint: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error creating user: {str(e)}"
+            detail=f"Error in user creation process: {str(e)}"
         )
     
 
 @router.put("/{user_id}")
 async def update_user(
     user_id: int,
-    username: str = None,
-    password: str = None,
-    role: str = None,
-    fullname: str = None,
-    email: str = None,
-    department: str = None,
+    username: str = Form(None),
+    password: str = Form(None),
+    role: str = Form(None),
+    fullname: str = Form(None),
+    email: str = Form(None),
+    department: str = Form(None),
     face_image: UploadFile = File(None),
     current_admin: User = Depends(get_current_admin)
 ):
     """Admin cập nhật thông tin user."""
+    print(f"Updating user ID {user_id}")
+    print(f"Data: username={username}, role={role}, fullname={fullname}, email={email}, department={department}")
+    print(f"Face image: {face_image.filename if face_image else 'None'}")
+    
     user = await get_user_by_id(user_id=user_id)
     
     await validate_data(
@@ -106,6 +129,7 @@ async def update_user(
         password=password,
         role=role,
         email=email,
+        user_id=user_id
     )
     if username:
         user.username = username
@@ -125,21 +149,30 @@ async def update_user(
     if department:
         user.department = department
 
+    face_url = None
     if face_image:        
         try:
             face_path = save_face_image(file=face_image, folder="faces")
             remove_face_image(path=user.face_path)
             user.face_path = face_path
+            face_url = f"/{face_path}"
+            print(f"Updated face_path to: {face_path}")
 
         except Exception as e:
-            remove_face_image(path=face_path)
+            print(f"Error updating face image: {str(e)}")
+            if 'face_path' in locals():
+                remove_face_image(path=face_path)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error updating user: {str(e)}"
             )
 
     await user.save()
-    return {"message": "User updated successfully"}
+    print(f"User {user_id} updated successfully")
+    return {
+        "message": "User updated successfully",
+        "face_path": face_url
+    }
 
 
 @router.delete("/{user_id}")

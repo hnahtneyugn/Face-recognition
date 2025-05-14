@@ -35,12 +35,11 @@ async def shutdown_event():
     print("Scheduler shutdown")
 
 
-from fastapi.middleware.cors import CORSMiddleware
-
+# Adding CORS middleware to allow requests from frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3001"],  # URL của frontend
+    allow_origins=["http://localhost:3001", "http://127.0.0.1:3001"],  # Frontend URLs
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
 )
