@@ -72,9 +72,11 @@ export default function DailyAttendanceList() {
     const fetchDailyAttendance = async () => {
       setIsLoading(true);
       try {
+        // Tách ngày tháng năm từ selectedDate
+        const [year, month, day] = selectedDate.split("-");
         // Sử dụng API utility để lấy dữ liệu điểm danh hàng ngày
-        const data = await api.get<AttendanceRecord[]>(
-          `attendance/daily?date=${selectedDate}&user_name=${encodeURIComponent(
+        const data = await api.get<any[]>(
+          `admins/attendance?year=${year}&month=${month}&day=${day}&fullname=${encodeURIComponent(
             searchTerm
           )}&department=${encodeURIComponent(
             departmentFilter === "all" ? "" : departmentFilter
@@ -82,8 +84,19 @@ export default function DailyAttendanceList() {
             statusFilter === "all" ? "" : statusFilter
           )}`
         );
-        
-        setAttendanceRecords(data);
+        // Map lại dữ liệu trả về từ backend sang đúng format frontend
+        setAttendanceRecords(
+          data.map((item) => ({
+            id: item.attendance_id,
+            user_id: item.user_id,
+            user_name: item.fullname,
+            user_email: item.email,
+            department: item.department,
+            date: item.date,
+            time: item.time,
+            status: item.status,
+          }))
+        );
       } catch (error: any) {
         toast({
           title: "Lỗi",
@@ -126,8 +139,8 @@ export default function DailyAttendanceList() {
 
   const filteredRecords = attendanceRecords.filter((record) => {
     const matchesSearch =
-      record.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.user_email.toLowerCase().includes(searchTerm.toLowerCase());
+      (record.user_name && record.user_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (record.user_email && record.user_email.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesStatus = statusFilter === "all" || record.status === statusFilter;
     const matchesDepartment =
       departmentFilter === "all" || record.department === departmentFilter;
@@ -303,7 +316,7 @@ export default function DailyAttendanceList() {
                             <span>{record.department}</span>
                           </div>
                         </TableCell>
-                        <TableCell>{record.time || "—"}</TableCell>
+                        <TableCell>{record.time ? record.time.slice(0, 8) : "—"}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {getStatusDisplay(record.status)}

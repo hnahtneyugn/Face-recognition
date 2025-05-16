@@ -236,7 +236,7 @@ export default function AttendanceHistory({ userId, refreshTrigger = 0 }: Attend
               {attendanceRecords.map((record) => (
                 <TableRow key={record.attendance_id}>
                   <TableCell>{formatDate(record.date)}</TableCell>
-                  <TableCell>{record.time ? new Date(record.time).toLocaleTimeString("vi-VN") : "—"}</TableCell>
+                  <TableCell>{record.time ? record.time.slice(0, 8) : "—"}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">{getStatusDisplay(record.status)}</div>
                   </TableCell>
