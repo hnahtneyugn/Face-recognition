@@ -1,0 +1,29 @@
+version: "3.9"
+services:
+  backend:
+    image: face-recognition-backend:latest
+    build: ./backend
+    container_name: backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./faces:/app/faces
+    networks:
+      - face-recognition-network
+
+  frontend:
+    image: face-recognition-frontend:latest
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./faces:/app/faces
+    depends_on:
+      - backend
+    networks:
+      - face-recognition-network
+
+networks:
+  face-recognition-network:
+    driver: bridge 

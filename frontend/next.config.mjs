@@ -10,14 +10,29 @@ const nextConfig = {
     unoptimized: true,
   },
   async rewrites() {
+    // Trong Docker, backend service có tên là "backend"
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:8000/:path*', // Proxy to Backend
+        destination: 'http://backend:8000/:path*', // Proxy to Backend container
       },
       {
         source: '/faces/:path*',
-        destination: 'http://localhost:8000/faces/:path*', // Proxy to Backend faces folder
+        destination: 'http://backend:8000/faces/:path*', // Proxy to Backend faces folder
+      },
+    ];
+  },
+  // Enable CORS for development
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Credentials', value: 'true' },
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET,DELETE,PATCH,POST,PUT' },
+          { key: 'Access-Control-Allow-Headers', value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization' },
+        ],
       },
     ];
   },

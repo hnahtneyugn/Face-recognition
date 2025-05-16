@@ -5,6 +5,9 @@
 // Base URL for API calls - either the environment variable or the default backend URL
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
 
+// Debug log for API base URL
+console.log('API_BASE_URL:', API_BASE_URL);
+
 // Generic fetch function with authentication and error handling
 export async function fetchAPI<T = any>(
   endpoint: string,
