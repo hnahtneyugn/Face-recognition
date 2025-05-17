@@ -36,10 +36,18 @@ export default function UserDashboard() {
     face_path: string
   } | null>(null)
   const [isLoadingUser, setIsLoadingUser] = useState(true)
+  const [toastShown, setToastShown] = useState(false)
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const previousFaceCount = useRef(0)
+  const frameCounter = useRef(0)
+  const faceDetectionInterval = useRef<NodeJS.Timeout | null>(null)
+  const transitionTimeout = useRef<NodeJS.Timeout | null>(null)
+  const stableFrameCount = useRef(0)
+  const singleFaceConfirmCount = useRef(0)
+  const SINGLE_FACE_CONFIRM_FRAMES = 10 // Số frame liên tiếp cần để xác nhận chỉ còn 1 khuôn mặt
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
-  const faceDetectionInterval = useRef<NodeJS.Timeout | null>(null)
   const { toast } = useToast()
   const router = useRouter()
 
@@ -93,8 +101,9 @@ export default function UserDashboard() {
       if (stream) {
         stream.getTracks().forEach((track) => track.stop())
       }
-      if (faceDetectionInterval.current) {
-        clearInterval(faceDetectionInterval.current)
+      if (faceDetectionInterval.current !== null) {
+        clearTimeout(faceDetectionInterval.current)
+        faceDetectionInterval.current = null
       }
     }
   }, [stream])
@@ -121,15 +130,27 @@ export default function UserDashboard() {
         canvasRef.current = canvas
       }
 
-      setTimeout(() => {
-        startFaceDetection()
-      }, 1000)
+      // Bắt đầu phát hiện khuôn mặt ngay lập tức thay vì đợi setTimeout
+      startFaceDetection()
+      console.log("Đã bắt đầu phát hiện khuôn mặt")
     } catch (error) {
+      console.error("Lỗi khi mở camera:", error)
       toast({
         title: "Lỗi camera",
         description: "Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.",
         variant: "destructive",
       })
+    }
+  }
+
+  const showWarningToast = (faceCount: number) => {
+    if (!toastShown) {
+      toast({
+        title: "Cảnh báo",
+        description: `Phát hiện ${faceCount} khuôn mặt trong khung hình. Vui lòng đảm bảo chỉ có một khuôn mặt.`,
+        variant: "destructive",
+      })
+      setToastShown(true)
     }
   }
 
@@ -141,10 +162,53 @@ export default function UserDashboard() {
     setIsCameraOpen(false)
     setMultipleFacesDetected(false)
     setFaceCount(0)
+    setToastShown(false)
+    singleFaceConfirmCount.current = 0
 
-    if (faceDetectionInterval.current) {
-      clearInterval(faceDetectionInterval.current)
+    if (faceDetectionInterval.current !== null) {
+      clearTimeout(faceDetectionInterval.current)
       faceDetectionInterval.current = null
+    }
+  }
+
+  const detectFaces = async () => {
+    if (!videoRef.current || !stream) return
+    const video = videoRef.current
+    if (video.readyState !== 4) return
+
+    try {
+      const result = await detectFacesInVideo(video)
+      const currentFaceCount = result.faceCount
+
+      // Nếu chưa phát hiện nhiều khuôn mặt và hiện tại phát hiện > 1 khuôn mặt
+      if (!multipleFacesDetected && currentFaceCount > 1) {
+        setMultipleFacesDetected(true)
+        setFaceCount(currentFaceCount)
+        showWarningToast(currentFaceCount)
+        singleFaceConfirmCount.current = 0
+        return
+      }
+
+      // Nếu đang ở trạng thái nhiều khuôn mặt
+      if (multipleFacesDetected) {
+        if (currentFaceCount === 1) {
+          // Tăng bộ đếm khi phát hiện 1 khuôn mặt
+          singleFaceConfirmCount.current += 1
+
+          // Chỉ tắt cảnh báo khi đã xác nhận chắc chắn chỉ còn 1 khuôn mặt
+          if (singleFaceConfirmCount.current >= SINGLE_FACE_CONFIRM_FRAMES) {
+            setMultipleFacesDetected(false)
+            setFaceCount(1)
+            setToastShown(false)
+            singleFaceConfirmCount.current = 0
+          }
+        } else {
+          // Reset bộ đếm nếu phát hiện lại nhiều khuôn mặt
+          singleFaceConfirmCount.current = 0
+        }
+      }
+    } catch (error) {
+      console.error("Lỗi khi phát hiện khuôn mặt:", error)
     }
   }
 
@@ -153,25 +217,8 @@ export default function UserDashboard() {
       clearInterval(faceDetectionInterval.current)
     }
 
-    faceDetectionInterval.current = setInterval(() => {
-      detectFaces()
-    }, 500)
-  }
-
-  const detectFaces = async () => {
-    if (!videoRef.current || !stream) return
-
-    const video = videoRef.current
-    if (video.readyState !== 4) return
-
-    try {
-      const result = await detectFacesInVideo(video)
-      const hasMultipleFaces = result.faceCount > 1
-      setFaceCount(result.faceCount)
-      setMultipleFacesDetected(hasMultipleFaces)
-    } catch (error) {
-      console.error("Lỗi khi phát hiện khuôn mặt:", error)
-    }
+    // Kiểm tra mỗi 200ms
+    faceDetectionInterval.current = setInterval(detectFaces, 200)
   }
 
   const handleCaptureImage = async () => {
@@ -202,7 +249,7 @@ export default function UserDashboard() {
 
       // Sử dụng hàm verifyUserFace từ face-api.ts
       const result = await verifyUserFace(blob);
-      
+
       setAttendanceResult({
         success: result.success,
         message: result.message,
@@ -228,15 +275,27 @@ export default function UserDashboard() {
   const handleLogout = () => {
     // Xóa token trong localStorage
     localStorage.removeItem("auth_token")
-    
+
     // Xóa token trong cookie
     document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
-    
+
     toast({
       title: "Đăng xuất thành công",
       description: "Bạn đã đăng xuất khỏi hệ thống",
     })
     router.push("/")
+  }
+
+  // Thêm style animation cho overlay cảnh báo
+  const overlayStyle = {
+    opacity: multipleFacesDetected ? 1 : 0,
+    transition: 'opacity 0.3s ease-in-out'
+  }
+
+  // Thêm style cho video container
+  const videoContainerStyle = {
+    transition: 'transform 0.3s ease-in-out',
+    transform: isTransitioning ? 'scale(0.99)' : 'scale(1)'
   }
 
   if (isLoadingUser) {
@@ -318,7 +377,7 @@ export default function UserDashboard() {
                     </Button>
                   ) : (
                     <div className="space-y-4">
-                      <div className="relative border rounded-lg overflow-hidden">
+                      <div className="relative border rounded-lg overflow-hidden" style={videoContainerStyle}>
                         <video
                           autoPlay
                           playsInline
@@ -326,14 +385,23 @@ export default function UserDashboard() {
                             if (videoElement && stream) {
                               videoElement.srcObject = stream
                               videoRef.current = videoElement
+                              videoElement.onloadeddata = () => {
+                                console.log("Video đã load xong và sẵn sàng")
+                                startFaceDetection()
+                              }
                             }
                           }}
                           className="w-full h-auto"
+                          style={{ transform: 'scaleX(-1)' }} // Mirror effect
                         />
 
                         {multipleFacesDetected && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                            <div className="bg-white p-4 rounded-md max-w-xs text-center">
+                          <div
+                            className={`absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm ${multipleFacesDetected ? 'pointer-events-auto' : 'pointer-events-none'
+                              }`}
+                            style={overlayStyle}
+                          >
+                            <div className="bg-white p-4 rounded-md max-w-xs text-center transform transition-transform duration-300 hover:scale-105">
                               <AlertTriangle className="h-8 w-8 text-amber-500 mx-auto mb-2" />
                               <p className="font-medium text-red-600">Phát hiện {faceCount} khuôn mặt!</p>
                               <p className="text-sm mt-1">Vui lòng đảm bảo chỉ có khuôn mặt của bạn trong khung hình</p>
@@ -342,21 +410,12 @@ export default function UserDashboard() {
                         )}
                       </div>
 
-                      {multipleFacesDetected && (
-                        <Alert variant="warning" className="bg-amber-50 border-amber-200">
-                          <AlertTriangle className="h-4 w-4" />
-                          <AlertTitle>Cảnh báo</AlertTitle>
-                          <AlertDescription>
-                            Phát hiện {faceCount} khuôn mặt trong khung hình. Hệ thống chỉ chấp nhận một khuôn mặt duy nhất để điểm danh.
-                          </AlertDescription>
-                        </Alert>
-                      )}
-
                       <div className="flex gap-2 justify-center">
                         <Button
                           onClick={handleCaptureImage}
                           disabled={isProcessing || multipleFacesDetected}
                           variant="default"
+                          className={multipleFacesDetected ? "cursor-not-allowed opacity-50" : ""}
                         >
                           {isProcessing ? (
                             <>

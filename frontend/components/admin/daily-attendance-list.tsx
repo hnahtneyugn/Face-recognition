@@ -59,6 +59,7 @@ export default function DailyAttendanceList() {
     []
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
@@ -116,7 +117,12 @@ export default function DailyAttendanceList() {
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+    setSearchInput(e.target.value);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchTerm(searchInput);
   };
 
   const handleStatusFilterChange = (value: string) => {
@@ -129,7 +135,7 @@ export default function DailyAttendanceList() {
 
   const handleViewUserAttendance = (userId: string, userName: string) => {
     router.push(
-      `/admin/attendance/${userId}?name=${encodeURIComponent(userName)}`
+      `/admin/user-attendance/${userId}?name=${encodeURIComponent(userName)}`
     );
   };
 
@@ -210,16 +216,16 @@ export default function DailyAttendanceList() {
             </div>
 
             <div className="flex-1 flex flex-col sm:flex-row gap-2">
-              <div className="relative flex-1">
+              <form onSubmit={handleSearchSubmit} className="relative flex-1">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
                   type="search"
-                  placeholder="Tìm kiếm theo tên hoặc email..."
+                  placeholder="Tìm kiếm theo tên hoặc email... (nhấn Enter để tìm)"
                   className="pl-8"
-                  value={searchTerm}
+                  value={searchInput}
                   onChange={handleSearchChange}
                 />
-              </div>
+              </form>
 
               <Select
                 value={departmentFilter}

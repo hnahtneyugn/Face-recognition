@@ -27,6 +27,7 @@ interface AttendanceHistoryProps {
 export default function AttendanceHistory({ userId, refreshTrigger = 0 }: AttendanceHistoryProps) {
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [dateFilterInput, setDateFilterInput] = useState<string>("")
   const [dateFilter, setDateFilter] = useState<string>("")
   const [monthFilter, setMonthFilter] = useState<string>(format(new Date(), "yyyy-MM"))
   const [yearFilter, setYearFilter] = useState<string>(getYear(new Date()).toString())
@@ -80,10 +81,29 @@ export default function AttendanceHistory({ userId, refreshTrigger = 0 }: Attend
 
   const handleFilterTypeChange = (value: string) => {
     setFilterType(value as "day" | "month" | "year")
+    
+    // Reset date filter when changing filter type
+    if (value === "day") {
+      setDateFilterInput("");
+      setDateFilter("");
+    }
   }
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDateFilter(e.target.value)
+  const handleDateInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDateFilterInput(e.target.value);
+  }
+  
+  const handleDateInputBlur = () => {
+    // Only update the actual filter when the input is complete (valid date)
+    if (dateFilterInput && dateFilterInput.length === 10) { // YYYY-MM-DD format has 10 characters
+      setDateFilter(dateFilterInput);
+    }
+  }
+  
+  const handleDateKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && dateFilterInput && dateFilterInput.length === 10) {
+      setDateFilter(dateFilterInput);
+    }
   }
 
   const handleMonthChange = (value: string) => {
@@ -185,7 +205,15 @@ export default function AttendanceHistory({ userId, refreshTrigger = 0 }: Attend
         {filterType === "day" && (
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-gray-500" />
-            <Input type="date" value={dateFilter} onChange={handleDateChange} className="w-full sm:w-auto" />
+            <Input 
+              type="date" 
+              value={dateFilterInput} 
+              onChange={handleDateInputChange}
+              onBlur={handleDateInputBlur}
+              onKeyDown={handleDateKeyDown}
+              placeholder="YYYY-MM-DD"
+              className="w-full sm:w-auto" 
+            />
           </div>
         )}
 
