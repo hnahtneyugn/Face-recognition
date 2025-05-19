@@ -50,7 +50,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { api } from "@/lib/api"; // Import our new API utility
-import { useDebounce } from "@/hooks/use-debounce";
 
 // Định nghĩa kiểu vai trò người dùng
 type UserRole = "user" | "admin";
@@ -74,8 +73,6 @@ export default function UserList() {
   const [userToEdit, setUserToEdit] = useState<UserType | null>(null);
   // State để lưu từ khóa tìm kiếm trong input
   const [searchInput, setSearchInput] = useState("");
-  // State để lưu từ khóa tìm kiếm đã xác nhận để gọi API
-  const [searchTerm, setSearchTerm] = useState("");
   // State để lưu bộ lọc phòng ban
   const [departmentFilter, setDepartmentFilter] = useState("all");
   // State để lưu bộ lọc vai trò
@@ -106,10 +103,8 @@ export default function UserList() {
     const fetchUsers = async () => {
       setIsLoading(true);
       try {
-        // Chuẩn bị query parameters cho bộ lọc
+        // Chuẩn bị query parameters cho bộ lọc - chỉ gửi departmentFilter và roleFilter
         const queryParams = new URLSearchParams();
-        if (searchTerm) queryParams.append("fullname", searchTerm);
-        if (searchTerm) queryParams.append("email", searchTerm);
         if (departmentFilter !== "all")
           queryParams.append("department", departmentFilter);
         if (roleFilter !== "all") queryParams.append("role", roleFilter);
@@ -129,7 +124,7 @@ export default function UserList() {
     };
 
     fetchUsers();
-  }, [searchTerm, departmentFilter, roleFilter, toast, router]);
+  }, [departmentFilter, roleFilter, toast, router]);
 
   // Mở dialog chỉnh sửa người dùng
   const handleEditUser = (user: UserType) => {
@@ -236,14 +231,6 @@ export default function UserList() {
     setSearchInput(e.target.value);
   };
 
-  // Debounce search term
-  const debouncedSearchTerm = useDebounce(searchInput, 500);
-
-  // Update search term when debounced value changes
-  useEffect(() => {
-    setSearchTerm(debouncedSearchTerm);
-  }, [debouncedSearchTerm]);
-
   // Xử lý khi form search được submit
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -261,11 +248,11 @@ export default function UserList() {
     new Set(users.map((user) => user.department))
   );
 
-  // Lọc người dùng trên client-side (dự phòng)
+  // Lọc người dùng trên client-side - sử dụng trực tiếp searchInput thay vì searchTerm
   const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = searchInput === "" ||
+      user.fullname.toLowerCase().includes(searchInput.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchInput.toLowerCase());
     const matchesDepartment =
       departmentFilter === "all" || user.department === departmentFilter;
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
