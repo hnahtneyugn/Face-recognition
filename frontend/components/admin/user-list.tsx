@@ -233,12 +233,12 @@ export default function UserList() {
   // Xử lý thay đổi từ khóa tìm kiếm trong input
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(e.target.value);
+    setSearchTerm(e.target.value); // Update search term immediately
   };
 
   // Xử lý khi form search được submit
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setSearchTerm(searchInput);
   };
 
   // Điều hướng đến trang lịch sử điểm danh
@@ -311,7 +311,7 @@ export default function UserList() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
             type="search"
-            placeholder="Tìm kiếm theo tên hoặc email... (nhấn Enter để tìm)"
+            placeholder="Tìm kiếm theo tên hoặc email..."
             className="pl-8"
             value={searchInput}
             onChange={handleSearchChange}
@@ -375,7 +375,7 @@ export default function UserList() {
                     <div className="flex items-center gap-2">
                       {user.face_path ? (
                         <img
-                          src={user.face_path || "/placeholder.svg"}
+                          src={user.face_path}
                           alt={user.fullname}
                           className="w-8 h-8 rounded-full object-cover"
                           onError={(e) =>

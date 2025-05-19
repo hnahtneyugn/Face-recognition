@@ -49,6 +49,11 @@ export async function fetchAPI<T = any>(
     });
 
     console.log(`Response status: ${response.status}`);
+    
+    // If request was aborted, throw AbortError
+    if (options.signal && options.signal.aborted) {
+      throw new DOMException('Aborted', 'AbortError');
+    }
 
     // Handle unauthorized responses
     if (response.status === 401) {

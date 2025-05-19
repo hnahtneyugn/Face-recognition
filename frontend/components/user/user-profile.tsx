@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Building, Mail, User, Lock } from "lucide-react"
+import { useEffect, useState } from "react"
 
 // Định nghĩa kiểu User dựa trên API
 interface User {
@@ -17,6 +18,15 @@ interface UserProfileProps {
 }
 
 export default function UserProfile({ user }: UserProfileProps) {
+  const [imageSrc, setImageSrc] = useState<string>("/placeholder.svg?height=150&width=150")
+
+  useEffect(() => {
+    if (user.face_path) {
+      // Ensure the path is correct for both development and Docker environments
+      setImageSrc(user.face_path)
+    }
+  }, [user.face_path])
+
   return (
     <Card className="max-w-3xl mx-auto">
       <CardHeader>
@@ -28,9 +38,10 @@ export default function UserProfile({ user }: UserProfileProps) {
           <div className="flex flex-col items-center space-y-4">
             <div className="relative">
               <img
-                src={user.face_path || "/placeholder.svg?height=150&width=150"}
+                src={imageSrc}
                 alt={user.fullname}
                 className="w-32 h-32 rounded-full object-cover border-2 border-gray-200"
+                onError={() => setImageSrc("/placeholder.svg?height=150&width=150")}
               />
             </div>
             <div className="text-center">

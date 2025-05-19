@@ -6,6 +6,7 @@ import shutil
 
 def save_face_image(file: UploadFile, folder: str) -> str:
     """Lưu ảnh khuôn mặt vào thư mục chỉ định, trả về đường dẫn ảnh."""
+    # Đảm bảo thư mục tồn tại
     os.makedirs(folder, exist_ok=True)
 
     timestamp = int(datetime.now().timestamp())
@@ -15,7 +16,7 @@ def save_face_image(file: UploadFile, folder: str) -> str:
             print(f"Invalid filename: {file.filename}, using default extension")
             file_extension = "jpg"
         else:
-            file_extension = file.filename.split(".")[-1]
+            file_extension = file.filename.split(".")[-1].lower()
             
         file_name = f"{timestamp}.{file_extension}"
         relative_path = f"{folder}/{file_name}"
@@ -24,6 +25,20 @@ def save_face_image(file: UploadFile, folder: str) -> str:
         print(f"Saving file to: {absolute_path}")
         print(f"Content type: {file.content_type}, Size: {file.size}")
 
+        # Kiểm tra quyền ghi vào thư mục
+        if not os.access(os.path.dirname(absolute_path), os.W_OK):
+            print(f"Warning: No write permission to {os.path.dirname(absolute_path)}")
+            # Thử tạo file để kiểm tra quyền
+            try:
+                with open(os.path.join(os.path.dirname(absolute_path), "test_permission.txt"), "w") as f:
+                    f.write("test")
+                os.remove(os.path.join(os.path.dirname(absolute_path), "test_permission.txt"))
+                print("Write permission test passed")
+            except Exception as e:
+                print(f"Write permission test failed: {str(e)}")
+                raise
+        
+        # Sử dụng phương thức đọc/ghi file tiêu chuẩn
         with open(absolute_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
@@ -32,17 +47,27 @@ def save_face_image(file: UploadFile, folder: str) -> str:
         # Reset file position for potential reuse
         file.file.seek(0)
         
+        # Kiểm tra file đã được tạo thành công
+        if os.path.exists(absolute_path) and os.path.getsize(absolute_path) > 0:
+            print(f"File verified: exists and size is {os.path.getsize(absolute_path)} bytes")
+        else:
+            raise Exception(f"File verification failed: exists={os.path.exists(absolute_path)}, size={os.path.getsize(absolute_path) if os.path.exists(absolute_path) else 'N/A'}")
+        
         return relative_path
     except Exception as e:
         print(f"Error saving face image: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error saving face image: {e}"
+            detail=f"Error saving face image: {str(e)}"
         )
 
 
 def remove_face_image(path: str):
     """Xóa file nếu tồn tại."""
+    if not path:
+        print("No path provided, skipping file removal")
+        return
+    
     try:
         # Try with the path as-is
         if os.path.exists(path):

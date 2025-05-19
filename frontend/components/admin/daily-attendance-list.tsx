@@ -118,11 +118,11 @@ export default function DailyAttendanceList() {
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(e.target.value);
+    setSearchTerm(e.target.value);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setSearchTerm(searchInput);
   };
 
   const handleStatusFilterChange = (value: string) => {
@@ -220,7 +220,7 @@ export default function DailyAttendanceList() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
                   type="search"
-                  placeholder="Tìm kiếm theo tên hoặc email... (nhấn Enter để tìm)"
+                  placeholder="Tìm kiếm theo tên hoặc email..."
                   className="pl-8"
                   value={searchInput}
                   onChange={handleSearchChange}

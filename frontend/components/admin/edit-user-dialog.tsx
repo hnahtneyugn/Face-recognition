@@ -93,32 +93,27 @@ export default function EditUserDialog({
       if (formData.department) formDataToSend.append("department", formData.department);
       // Không gửi face_image
 
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(`/api/admins/${user.user_id}`, {
-        method: 'PUT',
-        body: formDataToSend,
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : ''
-        }
-      });
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || `HTTP error ${response.status}`);
-      }
-      const responseData = await response.json();
+      // Sử dụng api.putForm thay vì fetch trực tiếp
+      const responseData = await api.putForm(`admins/${user.user_id}`, formDataToSend);
+      
       toast({
         title: "Thành công",
         description: "Đã cập nhật thông tin người dùng",
       });
-      // Cập nhật lại user ở cha
+      // Cập nhật lại user ở component cha
       onUserUpdated({
         ...user,
         fullname: formData.fullname,
         email: formData.email,
-        role: formData.role,
+        role: formData.role as UserRole,
         department: formData.department
       });
-      onClose();
+      
+      // Đóng dialog sau khi cập nhật thành công
+      setTimeout(() => {
+        onClose();
+        router.refresh(); // Refresh trang để cập nhật UI
+      }, 100);
     } catch (error: any) {
       toast({
         title: "Lỗi",

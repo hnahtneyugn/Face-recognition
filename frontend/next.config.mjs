@@ -11,16 +11,18 @@ const nextConfig = {
   },
   async rewrites() {
     // Trong Docker, backend service có tên là "backend"
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
     return [
       {
+        source: '/login',
+        destination: '/', // Redirect /login to the root page
+      },
+      {
         source: '/api/:path*',
-        destination: `${apiBaseUrl}/:path*`, // Proxy to Backend
-
+        destination: 'http://backend:8000/:path*', // Proxy to Backend container using service name
       },
       {
         source: '/faces/:path*',
-        destination: `${apiBaseUrl}/faces/:path*`, // Proxy to Backend
+        destination: 'http://backend:8000/faces/:path*', // Proxy to Backend faces folder using service name
       },
     ];
   },

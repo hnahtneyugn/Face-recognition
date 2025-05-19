@@ -12,6 +12,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src ./src
 
+# Tạo thư mục faces với quyền đầy đủ
+RUN mkdir -p /app/faces && chmod 777 /app/faces
+
 EXPOSE 8000
 
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"] 

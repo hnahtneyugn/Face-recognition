@@ -90,28 +90,39 @@ export default function AttendanceHistory({ userId, refreshTrigger = 0 }: Attend
   }
 
   const handleDateInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDateFilterInput(e.target.value);
+    const value = e.target.value;
+    setDateFilterInput(value);
+    
+    // Chỉ xử lý khi có giá trị
+    if (!value) {
+      setDateFilter("");
+      return;
+    }
+
+    // Kiểm tra xem giá trị có phải là ngày hợp lệ không
+    const date = new Date(value);
+    const isValidDate = date instanceof Date && !isNaN(date.getTime());
+    
+    // Chỉ set filter khi là ngày hợp lệ
+    if (isValidDate) {
+      setDateFilter(value);
+    }
   }
   
   const handleDateInputBlur = () => {
-    // Only update the actual filter when the input is complete (valid date)
-    if (dateFilterInput && dateFilterInput.length === 10) { // YYYY-MM-DD format has 10 characters
-      setDateFilter(dateFilterInput);
-    }
+    // No need to update filter here anymore
   }
   
   const handleDateKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && dateFilterInput && dateFilterInput.length === 10) {
-      setDateFilter(dateFilterInput);
-    }
+    // No need to update filter here anymore
   }
 
   const handleMonthChange = (value: string) => {
-    setMonthFilter(value)
+    setMonthFilter(value);
   }
 
   const handleYearChange = (value: string) => {
-    setYearFilter(value)
+    setYearFilter(value);
   }
 
   const formatDate = (dateString: string) => {
