@@ -241,7 +241,7 @@ export default function UserAttendanceHistory({
               Xem lịch sử điểm danh theo ngày, tháng hoặc năm
             </CardDescription>
           </div>
-          <Link href="/admin" passHref>
+          <Link href="/admin/attendance" passHref>
             <Button
               variant="outline"
               size="sm"
