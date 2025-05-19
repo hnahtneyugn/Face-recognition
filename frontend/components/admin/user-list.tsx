@@ -50,6 +50,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { api } from "@/lib/api"; // Import our new API utility
+import { useDebounce } from "@/hooks/use-debounce";
 
 // Định nghĩa kiểu vai trò người dùng
 type UserRole = "user" | "admin";
@@ -233,8 +234,15 @@ export default function UserList() {
   // Xử lý thay đổi từ khóa tìm kiếm trong input
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(e.target.value);
-    setSearchTerm(e.target.value); // Update search term immediately
   };
+
+  // Debounce search term
+  const debouncedSearchTerm = useDebounce(searchInput, 500);
+
+  // Update search term when debounced value changes
+  useEffect(() => {
+    setSearchTerm(debouncedSearchTerm);
+  }, [debouncedSearchTerm]);
 
   // Xử lý khi form search được submit
   const handleSearchSubmit = (e: React.FormEvent) => {

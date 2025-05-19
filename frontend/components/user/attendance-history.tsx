@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { format, getYear } from "date-fns"
 import { vi } from "date-fns/locale"
 import { api } from "@/lib/api" // Import API utility
+import { useDebounce } from "@/hooks/use-debounce" // Import useDebounce hook
 
 type AttendanceStatus = "on_time" | "late" | "pending" | "rejected"
 
@@ -92,31 +93,28 @@ export default function AttendanceHistory({ userId, refreshTrigger = 0 }: Attend
   const handleDateInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setDateFilterInput(value);
-    
-    // Chỉ xử lý khi có giá trị
-    if (!value) {
+  };
+  
+  // Debounce date filter
+  const debouncedDateFilter = useDebounce(dateFilterInput, 500);
+  
+  // Update filter when debounced value changes
+  useEffect(() => {
+    if (!debouncedDateFilter) {
       setDateFilter("");
       return;
     }
 
     // Kiểm tra xem giá trị có phải là ngày hợp lệ không
-    const date = new Date(value);
+    const date = new Date(debouncedDateFilter);
     const isValidDate = date instanceof Date && !isNaN(date.getTime());
     
     // Chỉ set filter khi là ngày hợp lệ
     if (isValidDate) {
-      setDateFilter(value);
+      setDateFilter(debouncedDateFilter);
     }
-  }
+  }, [debouncedDateFilter]);
   
-  const handleDateInputBlur = () => {
-    // No need to update filter here anymore
-  }
-  
-  const handleDateKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // No need to update filter here anymore
-  }
-
   const handleMonthChange = (value: string) => {
     setMonthFilter(value);
   }
@@ -220,8 +218,6 @@ export default function AttendanceHistory({ userId, refreshTrigger = 0 }: Attend
               type="date" 
               value={dateFilterInput} 
               onChange={handleDateInputChange}
-              onBlur={handleDateInputBlur}
-              onKeyDown={handleDateKeyDown}
               placeholder="YYYY-MM-DD"
               className="w-full sm:w-auto" 
             />

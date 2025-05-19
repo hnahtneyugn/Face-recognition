@@ -39,6 +39,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
+import { useDebounce } from "@/hooks/use-debounce";
 
 // Định nghĩa kiểu trạng thái điểm danh
 type AttendanceStatus = "on-time" | "late" | "rejected" | "pending";
@@ -69,6 +70,8 @@ export default function UserAttendanceHistory({
   const [isLoading, setIsLoading] = useState(true);
   // State để lưu bộ lọc ngày
   const [dateFilter, setDateFilter] = useState<string>("");
+  // State to store date input value
+  const [dateInputValue, setDateInputValue] = useState<string>("");
   // State để lưu bộ lọc tháng
   const [monthFilter, setMonthFilter] = useState<string>(
     format(new Date(), "yyyy-MM")
@@ -139,8 +142,16 @@ export default function UserAttendanceHistory({
 
   // Xử lý thay đổi ngày
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDateFilter(e.target.value);
+    setDateInputValue(e.target.value);
   };
+  
+  // Debounce date filter
+  const debouncedDateFilter = useDebounce(dateInputValue, 500);
+  
+  // Update filter when debounced value changes
+  useEffect(() => {
+    setDateFilter(debouncedDateFilter);
+  }, [debouncedDateFilter]);
 
   // Xử lý thay đổi tháng
   const handleMonthChange = (value: string) => {
@@ -264,7 +275,7 @@ export default function UserAttendanceHistory({
                 <Calendar className="h-4 w-4 text-gray-500" />
                 <Input
                   type="date"
-                  value={dateFilter}
+                  value={dateInputValue}
                   onChange={handleDateChange}
                   className="w-full sm:w-auto"
                 />

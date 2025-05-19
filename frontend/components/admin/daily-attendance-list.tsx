@@ -40,6 +40,7 @@ import { vi } from "date-fns/locale";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
+import { useDebounce } from "@/hooks/use-debounce";
 
 type AttendanceStatus = "on-time" | "late" | "rejected" | "pending";
 
@@ -64,6 +65,9 @@ export default function DailyAttendanceList() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
   const [selectedDate, setSelectedDate] = useState<string>(
+    format(new Date(), "yyyy-MM-dd")
+  );
+  const [dateInputValue, setDateInputValue] = useState<string>(
     format(new Date(), "yyyy-MM-dd")
   );
   const router = useRouter();
@@ -113,13 +117,20 @@ export default function DailyAttendanceList() {
   }, [selectedDate, searchTerm, departmentFilter, statusFilter, toast, router]);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedDate(e.target.value);
+    setDateInputValue(e.target.value);
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(e.target.value);
-    setSearchTerm(e.target.value);
   };
+
+  // Debounce search term
+  const debouncedSearchTerm = useDebounce(searchInput, 500);
+
+  // Update search term when debounced value changes
+  useEffect(() => {
+    setSearchTerm(debouncedSearchTerm);
+  }, [debouncedSearchTerm]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,6 +204,14 @@ export default function DailyAttendanceList() {
     return format(date, "EEEE, dd/MM/yyyy", { locale: vi });
   };
 
+  // Debounce date filter
+  const debouncedDateFilter = useDebounce(dateInputValue, 500);
+
+  // Update date filter when debounced value changes
+  useEffect(() => {
+    setSelectedDate(debouncedDateFilter);
+  }, [debouncedDateFilter]);
+
   return (
     <Card>
       <CardHeader>
@@ -209,7 +228,7 @@ export default function DailyAttendanceList() {
               <Calendar className="h-4 w-4 text-gray-500" />
               <Input
                 type="date"
-                value={selectedDate}
+                value={dateInputValue}
                 onChange={handleDateChange}
                 className="w-full sm:w-auto"
               />
