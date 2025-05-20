@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   backend:
-    image: face-recognition-backend-mac:latest
+    image: eddyandwhale/face-recognition-backend-mac
     build: ./backend
     container_name: backend
     ports:
@@ -12,7 +12,7 @@ services:
       - face-recognition-network
 
   frontend:
-    image: face-recognition-frontend-mac:latest
+    image: eddyandwhale/face-recognition-frontend-mac
     build: ./frontend
     container_name: frontend
     ports:
