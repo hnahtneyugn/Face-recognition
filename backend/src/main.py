@@ -29,6 +29,7 @@ scheduler.add_job(initialize_attendance, "cron", hour=21, minute=54)
 @app.on_event("startup")
 async def startup_event():
     await init_db()
+    await initialize_attendance()
     scheduler.start()
     print("Scheduler started")
     print(f"Static files directory: {os.path.abspath('faces')}")
