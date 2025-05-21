@@ -1,7 +1,5 @@
 # Face Recognition Application using DeepFace
 
-![768 × 480](https://pngdownload.io/wp-content/uploads/2025/04/Bombardino-Crocodillo-Viral-TikTok-Meme-Transparent-768x480.webp)
-
 ## Table of Contents
 --- 
 - [Authors](#authors)
