@@ -14,7 +14,7 @@
 
 ## Authors
 ---
-Group Bombardino Crocodilo
+Group Bombardino Crocodilo (K68A - AI1)
 1. Dao Tu Phat - 23020409
 2. Cao Minh Quang - 23020411
 3. Hoang Minh Quyen - 23020421
@@ -22,7 +22,7 @@ Group Bombardino Crocodilo
 
 ## Description
 ---
-A full-stack web application using DeepFace to help take attendance for employees of a company, teachers, lecturers from a school, institute, or simply a classroom full of students, using only face recognition. This app is deployed via Docker, runs smoothly on Windows, MacOS and Linux machines.
+A full-stack web application using DeepFace to help take attendance for employees of a company, teachers, lecturers from a school, institute, or simply a classroom full of students, using only face recognition. This app is deployed via Docker, runs smoothly on Windows, MacOS and Linux machines. It is also the final project for the course "AI System Development Practice" in our university, University of Engineering and Technology (UET - VNU).
 
 ## Technologies Used
 ---
@@ -30,6 +30,7 @@ A full-stack web application using DeepFace to help take attendance for employee
 	- React
 	- Typescript
 - Backend
+	- Python ![python](https://www.flaticon.com/free-icon/python_5968350)
 	- FastAPI
 	- Tortoise ORM
 - Database
