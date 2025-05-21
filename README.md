@@ -30,7 +30,7 @@ A full-stack web application using DeepFace to help take attendance for employee
 	- React
 	- Typescript
 - Backend
-	- Python ![python](https://www.flaticon.com/free-icon/python_5968350)
+	- Python 
 	- FastAPI
 	- Tortoise ORM
 - Database
