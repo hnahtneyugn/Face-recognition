@@ -1,0 +1,29 @@
+version: "3.9"
+services:
+  backend:
+    image: eddyandwhale/face-recognition-backend-mac
+    build: ./backend
+    container_name: backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./faces:/app/faces
+    networks:
+      - face-recognition-network
+
+  frontend:
+    image: eddyandwhale/face-recognition-frontend-mac
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./faces:/app/faces
+    depends_on:
+      - backend
+    networks:
+      - face-recognition-network
+
+networks:
+  face-recognition-network:
+    driver: bridge 
