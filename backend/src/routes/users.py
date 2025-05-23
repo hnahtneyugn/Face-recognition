@@ -2,11 +2,11 @@ from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File,
 from src.utils.auth_utils import get_current_user
 from src.utils.file_utils import save_face_image, remove_face_image
 from src.utils.filter_utils import attendance_filters
-
 from src.models import User, Attendance
 from datetime import datetime, time
 from deepface import DeepFace
 from typing import List
+import pytz
 import os
 from PIL import Image
 
@@ -36,7 +36,6 @@ async def record_attendance(
 ):
     """User điểm danh với ảnh khuôn mặt."""
     temp_path = save_face_image(file=face_image, folder="temp")
-
     try:   
         # Đảm bảo sử dụng đường dẫn tuyệt đối cho DeepFace
         absolute_temp_path = os.path.abspath(temp_path)
@@ -101,8 +100,10 @@ async def record_attendance(
             )
         
         # Ghi nhận điểm danh
-        checkin_date = datetime.now().date()
-        checkin_time = datetime.now().time()
+        vn_timezone = pytz.timezone("Asia/Ho_Chi_Minh")
+        checkin_date = datetime.now(vn_timezone).date()
+        checkin_time = datetime.now(vn_timezone).time()
+        print(checkin_time)
         attendance_time = time(8, 0)
 
         attendance = await Attendance.get_or_none(user=current_user, date=checkin_date)

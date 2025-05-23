@@ -1,9 +1,8 @@
-from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File, Request, Form
+from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File, Form
 from src.utils.auth_utils import get_current_admin, get_password_hash
 from src.utils.file_utils import save_face_image, remove_face_image
 from src.utils.filter_utils import attendance_filters, user_filters, get_user_by_id
 from src.utils.validate_utils import validate_data
-
 from src.models import User, Attendance
 from typing import List
 
@@ -46,7 +45,7 @@ async def create_user(
     email: str = Form(...),
     department: str = Form(...),
     face_image: UploadFile = File(...),
-    # current_admin: User = Depends(get_current_admin)
+    current_admin: User = Depends(get_current_admin)
 ):
     """Admin tạo user mới."""
     print(f"Creating user: {username}, {fullname}, {email}, {department}, {role}")

@@ -5,7 +5,6 @@ from src.routes import auth, admins, users
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from src.utils.attendance_utils import initialize_attendance
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import Request
 import os
 
 app = FastAPI()
@@ -23,7 +22,7 @@ app.mount("/faces", StaticFiles(directory="faces"), name="faces")
 scheduler = AsyncIOScheduler()
 
 
-scheduler.add_job(initialize_attendance, "cron", hour=21, minute=54)
+scheduler.add_job(initialize_attendance, "cron", hour=0, minute=0)
 
 
 @app.on_event("startup")
