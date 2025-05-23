@@ -1,0 +1,25 @@
+FROM alpine:3.18
+
+WORKDIR /init
+
+# Cài đặt công cụ cần thiết
+RUN apk add --no-cache bash curl findutils
+
+# Copy thư mục faces
+COPY faces /init/faces
+
+# Script khởi tạo dữ liệu - tạo bằng RUN echo
+RUN echo '#!/bin/bash' > /init/init.sh && \
+    echo 'rm -rf /data/*' >> /init/init.sh && \
+    echo 'mkdir -p /data' >> /init/init.sh && \
+    echo 'find /init/faces -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \) -exec cp {} /data/ \;' >> /init/init.sh && \
+    echo 'chmod -R 777 /data' >> /init/init.sh && \
+    echo 'echo "Đã copy các file ảnh vào /data:"' >> /init/init.sh && \
+    echo 'ls -la /data/' >> /init/init.sh && \
+    echo 'du -sh /data' >> /init/init.sh && \
+    echo 'echo "Dữ liệu faces đã được khởi tạo!"' >> /init/init.sh && \
+    echo 'sleep 5' >> /init/init.sh && \
+    chmod +x /init/init.sh
+
+# Command để chạy khi container khởi động
+CMD ["/init/init.sh"] 

@@ -1,9 +1,9 @@
 FROM node:20.11.1-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
+RUN npm config set registry https://registry.npmmirror.com
 RUN npm install
 COPY . .
-RUN npm config set registry https://registry.npmmirror.com
 RUN npm run build
 
 FROM node:20.11.1-alpine AS runner

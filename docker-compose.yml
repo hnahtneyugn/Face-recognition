@@ -1,29 +1,48 @@
 version: "3.9"
 services:
+  # Data initialization service
+  init-data:
+    image: eddyandwhale/face-recognition-init:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.init
+    container_name: init-data
+    volumes:
+      - face-data:/data
+    networks:
+      - face-recognition-network
+      
   backend:
-    image: eddyandwhale/face-recognition-backend-mac
+    image: eddyandwhale/face-recognition-backend-mac:latest
     build: ./backend
     container_name: backend
     ports:
       - "8000:8000"
     volumes:
-      - ./faces:/app/faces
+      - face-data:/app/faces
     networks:
       - face-recognition-network
+    depends_on:
+      init-data:
+        condition: service_completed_successfully
 
   frontend:
-    image: eddyandwhale/face-recognition-frontend-mac
+    image: eddyandwhale/face-recognition-frontend-mac:latest
     build: ./frontend
     container_name: frontend
     ports:
       - "3001:3001"
-    volumes:
-      - ./faces:/app/faces
-    depends_on:
-      - backend
     networks:
       - face-recognition-network
+    volumes:
+      - face-data:/app/faces
+    depends_on:
+      - backend
 
 networks:
   face-recognition-network:
-    driver: bridge 
+    driver: bridge
+
+volumes:
+  face-data:
+    driver: local 
