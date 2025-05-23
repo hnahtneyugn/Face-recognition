@@ -7,7 +7,6 @@
 - [Technologies](#technologies-used)
 - [Installation](#installation)
 - [Features](#features)
-- [Screenshots](#screenshots)
 - [Future improvements](#future-improvements)
 - [Contributing](#contributing)
 - [Project status](#project-status)
@@ -53,10 +52,17 @@ docker pull eddyandwhale/face-recognition-frontend-mac
 ```
 
 Backend Docker Image:
-[eddyandwhale/face-recognition-backend-mac ](https://hub.docker.com/r/eddyandwhale/face-recognition-backend-mac)
+[eddyandwhale/face-recognition-backend-mac](https://hub.docker.com/r/eddyandwhale/face-recognition-backend-mac)
 
 ```
 docker pull eddyandwhale/face-recognition-backend-mac
+```
+
+Face Photos Docker Image:
+[eddyandwhale/face-recognition-init](https://hub.docker.com/r/eddyandwhale/face-recognition-init)
+
+```
+docker pull eddyandwhale/face-recognition-init
 ```
 
 3. Download the **docker-compose.yml** file.
@@ -83,8 +89,6 @@ docker-compose up -d
 	- Take attendance via face recognition.
 	- See your own attendance history.
 	- Ask your Admin to modify your information.
-
-## Screenshots
 
 ## Future improvements
 ---
