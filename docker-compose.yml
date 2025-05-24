@@ -3,9 +3,6 @@ services:
   # Data initialization service
   init-data:
     image: eddyandwhale/face-recognition-init:latest
-    build:
-      context: .
-      dockerfile: Dockerfile.init
     container_name: init-data
     volumes:
       - face-data:/data
@@ -14,7 +11,6 @@ services:
       
   backend:
     image: eddyandwhale/face-recognition-backend-mac:latest
-    build: ./backend
     container_name: backend
     ports:
       - "8000:8000"
@@ -28,7 +24,6 @@ services:
 
   frontend:
     image: eddyandwhale/face-recognition-frontend-mac:latest
-    build: ./frontend
     container_name: frontend
     ports:
       - "3001:3001"
