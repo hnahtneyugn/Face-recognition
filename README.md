@@ -77,6 +77,13 @@ docker-compose up -d
 
 **NOTE**: Running `docker-compose up -d` is sufficient. The command will pull the images without having you do that manually.
 
+Some accounts for testing the app:
+- Admin:
+	- Username: caominhquang, Password: 01112005
+- User:
+	- Username: daotuphat, Password: 02072005
+	- Username: tanguyenthanh, Password: 16042005
+
 ## Features
 ---
 - Admin/User authentication and authorization.
